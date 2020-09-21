@@ -1,4 +1,8 @@
-"""   """
+"""Align PacBio isoseq or ccs reads to genome with minimap.
+And if necessary filter the output sam file by quality or by clipped bases,
+select a particular locus to inspect,
+or examine multimapping reads.  
+   """
 
 __author__ = "Sarah Hazell Pickering (s.h.pickering@medisin.uio.no)"
 __date__ = "2020-09-07"
@@ -15,6 +19,16 @@ rule all:
                 sample=config["samples"],
                 sfx = config["datatype_suffix"]),
 
+rule filter_and_select_hotair:
+    input:
+        expand("hotair_selection/{prfx}{sample}{sfx}.sam",
+                prfx = config["datatype_prefix"],
+                sample=config["samples"],
+                sfx = config["datatype_suffix"]),
+        expand("minimap_output/{prfx}{sample}{sfx}.filt.bam.bai",
+                prfx = config["datatype_prefix"],
+                sample=config["samples"],
+                sfx = config["datatype_suffix"])
 
 rule format_fastq_for_sam:
     input: 
@@ -41,22 +55,6 @@ rule minimap:
         "minimap2 -ax splice:hq {params.extra} -t {threads} "
             "--split-prefix {params.tmp} "
             "{input.index} {input.ccs} -o {output.sam} "
-
-#rule minimap:
-#    input:
-#        ccs = FASTQ_DIR + "/{sample}.fastq",
-#        index = config["genome_dir"] + "/minimap_indexes/" + \
-#                config["genome_file"][:-2] + "splice:hq.mmi"
-#    params:
-#        tmp_dir = "$TMPDIR",
-#        extra = config["params"]["minimap2"]
-#    threads: 12 
-#    output:
-#        "minimap_output/{sample}.sam"
-#    shell:
-#        "minimap2 -ax splice:hq {params.extra} -t {threads} "
-#            "--split-prefix {params.tmp_dir} "
-#            "{input.index} {input.ccs} -o {output}"
 
 rule sam_to_filtered_bam:
     input:
@@ -94,13 +92,14 @@ rule minimap_all:
 
 rule select_locus:
     input:
-        "minimap_output/{sample}.filt.bam"
+        bam = "minimap_output/{sample}.filt.bam",
+        index = "minimap_output/{sample}.filt.bam.bai"
     params:
         locus = "12:53962308-53974956"
     output:
         "hotair_selection/{sample}.sam"
     shell:
-        "samtools view -h {input} {params.locus}  | "
+        "samtools view -h {input.bam} {params.locus}  | "
             "samtools sort - -o {output} "
 
 rule list_mulitmappers:
