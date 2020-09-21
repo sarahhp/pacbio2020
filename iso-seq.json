@@ -1,0 +1,32 @@
+{
+    "date":"2020-08-21",
+    "dataset":"pacbio_isoseq",
+    "datatype_prefix":"",
+    "datatype_suffix":"_hq",
+
+    "genome_name":"hg38_ensembl95",
+    "genome_dir":"/projects/imb-pkbphil/sp/annotations/ensembl95",
+    "genome_file":"Homo_sapiens.GRCh38.dna.toplevel.fa",
+
+    "annot_files":["/projects/imb-pkbphil/sp/annotations/ensembl95/Homo_sapiens.GRCh38.95.gtf"],
+
+    "fastq_dir":"/projects/imb-pkbphil/sp/rnaseq/pacbio2020/filtered_fastp",
+    "fastq_suffix":".fastq",
+    "samples":["ASC_D07G_P6_D0",
+               "ASC_D07G_P6_D1",
+               "ASC_D07G_P6_D3",
+               "ASC_D07G_P6_D9",
+               "ASC_D07G_P6_PROLIF",
+               "ASC_D07G_P7_D0",
+               "ASC_D07G_P7_D1",
+               "ASC_D07G_P7_D3",
+               "ASC_D07G_P7_D9",
+               "ASC_D07G_P7_PROLIF"],
+    "pair_notation":"",
+    "replicates":"",
+    "params":{
+            "minimap2":"-uf -y -p 0.9 --secondary=yes",
+            "fastp":"--adapter_fasta new_transcripts/qc/adapters.fa",
+            "bam_filters":"-q 20 -F 0x100 -F 0x800",
+            }
+}
