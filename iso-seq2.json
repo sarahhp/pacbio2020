@@ -28,6 +28,7 @@
             "minimap2":"-uf -p 0.9 --secondary=yes",
             "fastp":"--adapter_fasta new_transcripts/qc/adapters.fa",
             "bam_filters":"-q 20 -F 0x100 -F 0x800",
-            "max_clip":50
+            "max_clip":50,
+            "tama":"-x capped -e common_ends -z 100"
             }
 }

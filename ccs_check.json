@@ -1,6 +1,6 @@
 {
-    "date":"2020-09-07",
-    "dataset":"pacbio_ccs",
+    "date":"2020-10-20",
+    "dataset":"pacbio_ccs_v_ensembl",
     "datatype_prefix":"CCS_",
     "datatype_suffix":"",
 
@@ -9,8 +9,8 @@
     "genome_file":"Homo_sapiens.GRCh38.dna.toplevel.fa",
 
     "annot_files":["/projects/imb-pkbphil/sp/annotations/ensembl95/Homo_sapiens.GRCh38.95.gtf"],
-    "annot_dir":"/projects/imb-pkbphil/sp/rnaseq/pacbio2020/tama/cupcake_merge",
-    "annot_name":"internal_junctions.correct",
+    "annot_dir":"/projects/imb-pkbphil/sp/annotations/ensembl95",
+    "annot_name":"Homo_sapiens.GRCh38.alltrans",
 
     "fastq_dir":"/projects/imb-pkbphil/sp/rnaseq/pacbio2020/filtered_fastp",
     "fastq_suffix":".fastq",

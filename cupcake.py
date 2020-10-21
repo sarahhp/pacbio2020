@@ -1,55 +1,60 @@
-"""   """
+"""Rules to collapse isoforms using tofu cupcake, 
+And apply a custom filter to remove sense transcripts,
+and single exon transcripts  (from sam or gff files).  
+Also formats the final gff file to include the number 
+of full length reads contributing to each transcript.  
+"""
 
 __author__ = "Sarah Hazell Pickering (s.h.pickering@medisin.uio.no)"
-__date__ = "2020-09-02"
+__date__ = "2020-09-22"
 
 FASTQ_DIR = config["fastq_dir"]
+INDIR = config["cpc_indir"]
 
 import pandas
 import get_fastq_sum as tools
 
-
 rule cupcake_all:
     input:
-        expand("cupcake/{sample}/filt-f.gff",
+        expand("cupcake_polyA/{sample}/filt-f.gff",
                 sample = config["samples"]),
-        expand("cupcake/{sample}/filt.min_fl_50-f.gff",
+        expand("cupcake_polyA/{sample}/filt.min_fl_50-f.gff",
                 sample =  config["samples"]),
-        expand("cupcake/{sample}/filt.min_fl_100-f.gff",
+        expand("cupcake_polyA/{sample}/filt.min_fl_100-f.gff",
                 sample = config["samples"])
 
 rule raw_abundance:
     input:
-        expand("cupcake/{sample}/A.collapsed.abundance.txt",
+        expand("cupcake_polyA/{sample}/A.collapsed.abundance.txt",
                 sample = config["samples"])
 
 rule cupcake_collapse:
     input: 
-        fq = "filtered_fastp/{sample}_hq.f.fastq",
-        sam = "hotair_selection/{sample}_hq.sam"
+        fq = FASTQ_DIR + "/{sample}_hq.fastq",
+        sam = INDIR + "/hotair_selection/{sample}_hq.sam"
     params:
         out_prefix = lambda wildcards, output: output.gff[:-14],
         extra = "--dun-merge-5-shorter"
     output:
-        groups = "cupcake/{sample}/A.collapsed.group.txt",
-        gff = "cupcake/{sample}/A.collapsed.gff",
-        fq = "cupcake/{sample}/A.collapsed.rep.fq"
+        groups = "cupcake_polyA/{sample}/A.collapsed.group.txt",
+        gff = "cupcake_polyA/{sample}/A.collapsed.gff",
+        fq = "cupcake_polyA/{sample}/A.collapsed.rep.fq"
     shell:
         "collapse_isoforms_by_sam.py --input {input.fq} --fq "
             "-s {input.sam} {params.extra} -o {params.out_prefix} "
 
 rule custom_filter:
     input:
-        gff = "cupcake/{sample}/A.collapsed.gff",
-        groups = "cupcake/{sample}/A.collapsed.group.txt",
-        fq = "cupcake/{sample}/A.collapsed.rep.fq"
+        gff = "cupcake_polyA/{sample}/A.collapsed.gff",
+        groups = "cupcake_polyA/{sample}/A.collapsed.group.txt",
+        fq = "cupcake_polyA/{sample}/A.collapsed.rep.fq"
     params:
         position = "53965961"
     output:
-        included = "cupcake/{sample}/included.txt",
-        filtered = "cupcake/{sample}/filt.gff",
-        groups = "cupcake/{sample}/filt.group.txt",
-        fq = "cupcake/{sample}/filt.rep.fq"
+        included = "cupcake_polyA/{sample}/included.txt",
+        filtered = "cupcake_polyA/{sample}/filt.gff",
+        groups = "cupcake_polyA/{sample}/filt.group.txt",
+        fq = "cupcake_polyA/{sample}/filt.rep.fq"
     shell:
         "grep 'transcript[[:space:]]' {input.gff} | " #select transcript lines
             "grep '[[:space:]]-[[:space:]]' | "       #select - strand
@@ -104,38 +109,38 @@ rule custom_bed_filter:
 rule generate_counts:
     input:
        report = "new_transcripts/reports/{sample}_polished.cluster_report.csv",
-       groups = "cupcake/{sample}/{id}.group.txt"
+       groups = "cupcake_polyA/{sample}/{id}.group.txt"
    # wildcard_constraints:
     #    id = "(?!\d)" #may not contain numbers
     params:
         inprefix = lambda wildcards, input: input.groups[:-10]
     output:
-        "cupcake/{sample}/{id}.abundance.txt"
+        "cupcake_polyA/{sample}/{id}.abundance.txt"
     shell:
         "get_abundance_post_collapse.py {params.inprefix} {input.report}"
 
 rule filter_by_cov:
     input:
-        gff = "cupcake/{sample}/{id}.gff",
-        counts = "cupcake/{sample}/{id}.abundance.txt",
-        fq = "cupcake/{sample}/{id}.rep.fq"
+        gff = "cupcake_polyA/{sample}/{id}.gff",
+        counts = "cupcake_polyA/{sample}/{id}.abundance.txt",
+        fq = "cupcake_polyA/{sample}/{id}.rep.fq"
     params: 
         inprefix = lambda wildcards, input: input.gff[:-4]
     wildcard_constraints:
         threshold = "\d+"
     output:
-        filtered = "cupcake/{sample}/{id}.min_fl_{threshold}.gff",
-        fq = "cupcake/{sample}/{id}.min_fl_{threshold}.rep.fq",
-        counts = "cupcake/{sample}/{id}.min_fl_{threshold}.abundance.txt"
+        filtered = "cupcake_polyA/{sample}/{id}.min_fl_{threshold}.gff",
+        fq = "cupcake_polyA/{sample}/{id}.min_fl_{threshold}.rep.fq",
+        counts = "cupcake_polyA/{sample}/{id}.min_fl_{threshold}.abundance.txt"
     shell:
         "filter_by_count.py --min_count {wildcards.threshold} --dun_use_group_count "
             "{params.inprefix} "
 
 rule add_cov_to_gff:
     input:
-        gff = "cupcake/{sample}/{id}.gff",
-        counts = "cupcake/{sample}/{id}.abundance.txt"
+        gff = "cupcake_polyA/{sample}/{id}.gff",
+        counts = "cupcake_polyA/{sample}/{id}.abundance.txt"
     output:
-        gff = "cupcake/{sample}/{id}-f.gff"
+        gff = "cupcake_polyA/{sample}/{id}-f.gff"
     run:
         tools.addCoverageToGFF(input.counts, input.gff, output.gff)
